@@ -6,25 +6,49 @@ Human-controlled desktop vision for Claude Code, Codex, and other MCP clients.
 [![Latest release](https://img.shields.io/github/v/release/ludekvodicka/ScreenMCP?display_name=tag)](https://github.com/ludekvodicka/ScreenMCP/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-![ScreenMCP source tools and exact model-visible preview](docs/assets/source-picker.png)
+![A human-selected region with a redaction mask and a labelled highlight — exactly the frame ScreenMCP hands to the model](docs/assets/editor.png)
 
-ScreenMCP is a local Electron app. The human chooses one monitor, window, or region; coding agents can inspect only that source through an authenticated MCP endpoint. Visible Off, Read-only, and Interactive access modes, an emergency STOP control, per-source redaction masks, change-aware capture, and a local audit trail keep the human in control.
+ScreenMCP is a local Electron app. The human chooses one monitor, window, or region; coding agents can see it — and, in Interactive mode, click and type within it — through an authenticated MCP endpoint, and nothing else. Off, Read-only, and Interactive access modes, an emergency STOP control, per-source redaction masks, change-aware capture, and a local audit trail keep the human in control at every step.
 
-## Features
+## What ScreenMCP can do
 
-- One human-selected monitor, window, or monitor region at a time
-- Direct Rectangle and Window desktop overlays plus an on-demand Whole screen chooser
-- Persistent capture stream: no new OS picker for every model request
-- Default-on Windows following for an active modal dialog, including parts outside its selected parent
-- `look(changed_since)` and `wait_for_change` avoid repeated vision tokens on idle screens
-- Redaction masks applied before resize, hashing, encoding, MCP resources, and retained audit frames
-- Off, Read-only, and source-bound Interactive modes, with a configurable Off or Read-only startup default
-- Read-only click/type requests can open ScreenMCP, switch to Interactive with human approval, and continue the same MCP call
-- Global STOP, tray status, and close-to-tray behavior
-- Explicit, temporary Windows interaction per selected source: UIA elements, OCR text, scoped click, and private typing audit
-- Localhost-only Streamable HTTP with bearer auth, Host validation, and browser-Origin rejection
-- Claude Code and Codex registration from the same `endpoint.json`
-- Consent-first update checks with explicit download and restart controls
+### One source, chosen by a human
+
+You pick exactly one **monitor, window, or region** — a dragged Rectangle, a point-and-highlight Window, or a Whole-screen chooser. Nothing is shared until you choose, and the selected source stays open as a persistent stream, so no OS picker pops up for every model request. `describe_source` reports the source kind, label, and dimensions without capturing an image.
+
+### See only what you allow — redaction and highlights
+
+Draw **redaction masks** to black out secrets and **highlights** to point the model at what matters, right on top of the selected source. Masks are applied before resize, hashing, encoding, MCP resources, and any retained audit frame — the model never receives the hidden pixels, and a highlight can carry a short label written just for the model. The image at the top of this page is exactly what the model would receive for that region.
+
+### Three access modes — including writeable actions
+
+One toggle moves between **Off**, **Read-only**, and **Interactive**:
+
+- **Off** — the global STOP gate. MCP clients stay connected, but every screen and control call returns `capture_stopped`.
+- **Read-only** — the model sees the selected source through `look` and `wait_for_change`, but cannot inspect controls, read UI text, click, or type.
+- **Interactive** *(Windows)* — the model can act on the source: `list_elements` (UI Automation control tree), `read_text` (UIA value or OCR of a region), `click` (UIA invoke or a scoped coordinate click), and `type_text` (UIA value or scoped keystrokes). A window source unlocks the full accessibility tree; a monitor or region source allows OCR and coordinate clicks.
+
+Interactive is bound to the current source, shown in amber, and revoked the moment you change source, press STOP, or go Off — there is no focus or idle auto-revoke, so it stays on while you work in other apps until you turn it off.
+
+![Interactive granted for the selected source — the model may OCR visible text and click within it](docs/assets/interactive.png)
+
+A `click` or `type_text` that arrives while you are in **Read-only** does not silently fail: ScreenMCP surfaces its window and waits up to 120 seconds for your explicit approval before switching to Interactive and continuing the same call. Denial, timeout, or a source change produces no input.
+
+### Change-aware capture
+
+`look(changed_since)` returns a text-only `changed:false` when the frame's perceptual hash is within a configurable threshold, and `wait_for_change` long-polls up to 120 seconds and returns a frame only after a meaningful visual change — so watching an app for progress does not burn vision tokens on an idle screen.
+
+### Every request is on the record
+
+A **local JSONL audit trail** records every request — client name, source, action, byte size, and outcome — alongside post-redaction thumbnails you can review in the app. Typed content is never stored; the target is logged as `[redacted N chars]`.
+
+![Local audit log — every look, click, and type stays visible](docs/assets/audit.png)
+
+### Tuned to your machine
+
+Frame format and longest side, JPEG quality, close-to-tray behavior, the startup access default, audit-frame retention, active-dialog following, and the global picker shortcuts are all configurable.
+
+![Settings — frame policy and app behavior](docs/assets/settings.png)
 
 ## Downloads
 
