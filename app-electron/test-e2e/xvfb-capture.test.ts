@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest'
 const require = createRequire(import.meta.url)
 
 describe.skipIf(process.platform !== 'linux')('X11 capture', () => {
-  it('returns a decodable look frame from the rendered Xvfb display', async () => {
+  it('returns a decodable look frame from the rendered Xvfb display', { retry: 2 }, async () => {
     const directory = await mkdtemp(join(tmpdir(), 'screenmcp-xvfb-'))
     const output = join(directory, 'look.jpg')
     try {

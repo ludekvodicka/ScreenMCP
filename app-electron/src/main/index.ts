@@ -135,7 +135,9 @@ if (singleInstance) {
     const smokeOutput = process.env.SCREENMCP_CAPTURE_SMOKE
     if (smokeOutput) {
       await runCaptureSmoke(capture, captureService, smokeOutput)
-      app.quit()
+      // Force a clean exit code: the graceful app.quit() teardown emits DBus/GObject
+      // failures under headless Xvfb (no session bus) that can flip the process exit to 1.
+      app.exit(0)
       return
     }
     shortcuts.apply(settings.get().shortcuts)
