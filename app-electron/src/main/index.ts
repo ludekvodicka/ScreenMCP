@@ -35,7 +35,10 @@ import { WinInput } from './win-input'
 
 const singleInstance = app.requestSingleInstanceLock()
 if (!singleInstance) app.quit()
-if (process.platform === 'linux') app.commandLine.appendSwitch('enable-features', 'WebRTCPipeWireCapturer')
+// PipeWire is the Wayland screen-capture backend. Requesting it on X11 — including headless Xvfb,
+// which has no PipeWire — makes getDisplayMedia hang, so enable it only when a Wayland session is present.
+if (process.platform === 'linux' && (process.env.WAYLAND_DISPLAY || process.env.XDG_SESSION_TYPE === 'wayland'))
+  app.commandLine.appendSwitch('enable-features', 'WebRTCPipeWireCapturer')
 
 const settings = new SettingsStore()
 const appState = new AppState()
