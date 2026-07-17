@@ -129,9 +129,11 @@ describe('skill installer', () => {
     const root = await temporaryRoot()
     const binary = join(root, 'bin')
     await mkdir(binary, { recursive: true })
+    // PATHEXT case must match the shim on disk: CI runs on a case-sensitive filesystem, where a
+    // lookup for "codex.CMD" would miss a "codex.cmd" file — Windows (case-insensitive) never does.
     await writeFile(join(binary, 'codex.cmd'), '@exit /b 0')
-    await expect(commandExistsOnPath('codex', 'win32', { PATH: binary, PATHEXT: '.CMD' }, join(root, 'user'))).resolves.toBe(true)
-    await expect(commandExistsOnPath('claude', 'win32', { PATH: binary, PATHEXT: '.CMD' }, join(root, 'user'))).resolves.toBe(false)
+    await expect(commandExistsOnPath('codex', 'win32', { PATH: binary, PATHEXT: '.cmd' }, join(root, 'user'))).resolves.toBe(true)
+    await expect(commandExistsOnPath('claude', 'win32', { PATH: binary, PATHEXT: '.cmd' }, join(root, 'user'))).resolves.toBe(false)
   })
 })
 
