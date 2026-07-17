@@ -2,6 +2,10 @@ appId: dev.screenmcp.desktop
 productName: ScreenMCP
 copyright: Copyright © 2026 ScreenMCP contributors
 asar: true
+# All native deps (get-windows, koffi, sharp, @resvg/resvg-js) are N-API / ship prebuilds,
+# which are ABI-stable across Node and Electron. Skip the electron-builder rebuild so packaging
+# needs no node-gyp/Visual Studio toolchain on CI runners.
+npmRebuild: false
 asarUnpack:
   - "node_modules/**/*.node"
   - "node_modules/get-windows/**/*"

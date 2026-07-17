@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "description": "Privacy-first desktop screen capture MCP server",
-  "author": "ludekvodicka",
+  "author": {
+    "name": "ludekvodicka",
+    "email": "3900551+ludekvodicka@users.noreply.github.com"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
