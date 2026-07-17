@@ -1,0 +1,61 @@
+appId: dev.screenmcp.desktop
+productName: ScreenMCP
+copyright: Copyright © 2026 ScreenMCP contributors
+asar: true
+asarUnpack:
+  - "node_modules/**/*.node"
+  - "node_modules/get-windows/**/*"
+  - "node_modules/koffi/**/*"
+  - "node_modules/tesseract.js/**/*"
+  - "node_modules/tesseract.js-core/**/*"
+  - "node_modules/@tesseract.js-data/eng/**/*"
+directories:
+  output: release
+files:
+  - app-electron/out/**/*
+  - package.json
+extraResources:
+  - from: skills
+    to: skills
+  - from: README.md
+    to: README.md
+  - from: LICENSE
+    to: LICENSE
+  - from: THIRD-PARTY.md
+    to: THIRD-PARTY.md
+extraMetadata:
+  main: app-electron/out/main/index.js
+publish:
+  - provider: github
+    owner: ludekvodicka
+    repo: ScreenMCP
+win:
+  icon: build/icon.png
+  target:
+    - nsis
+    - portable
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  artifactName: "${productName}-Setup-${version}-${arch}.${ext}"
+portable:
+  artifactName: "${productName}-Portable-${version}-${arch}.${ext}"
+mac:
+  icon: build/icon.png
+  category: public.app-category.developer-tools
+  identity: null
+  target:
+    - dmg
+dmg:
+  artifactName: "${productName}-${version}-${arch}.${ext}"
+linux:
+  icon: build/icon.png
+  category: Utility;Development
+  executableName: screenmcp
+  target:
+    - AppImage
+    - deb
+appImage:
+  artifactName: "${productName}-${version}-${arch}.${ext}"
+deb:
+  artifactName: "${productName}-${version}-${arch}.${ext}"

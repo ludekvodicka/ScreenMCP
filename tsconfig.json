@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "electron.vite.config.ts",
+    "vitest.config.ts",
+    "vitest.e2e.config.ts",
+    "core/**/*.ts",
+    "app-electron/**/*.ts",
+    "app-electron/**/*.tsx"
+  ]
+}
