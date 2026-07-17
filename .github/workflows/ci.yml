@@ -35,8 +35,10 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: sudo apt-get update && sudo apt-get install -y xvfb
-      - run: xvfb-run -a npm run test:capture
+      - run: sudo apt-get update && sudo apt-get install -y xvfb dbus
+      # dbus-run-session gives Electron a session bus; without it Chromium's DBus/GObject
+      # teardown aborts with a non-zero exit even after the frame is captured successfully.
+      - run: xvfb-run -a dbus-run-session -- npm run test:capture
 
   gitleaks:
     name: secret scan
