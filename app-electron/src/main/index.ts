@@ -146,7 +146,10 @@ if (singleInstance) {
     host.setMcpHandler(mcpRouter.handle)
   }).catch(error => {
     console.error('ScreenMCP startup failed', error)
-    app.quit()
+    // The graceful quit path stalls under headless Xvfb, so the smoke run would hang until its
+    // harness kills it and the real error never reaches the report.
+    if (process.env.SCREENMCP_CAPTURE_SMOKE) app.exit(1)
+    else app.quit()
   })
 }
 

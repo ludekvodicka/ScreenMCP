@@ -36,7 +36,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: sudo apt-get update && sudo apt-get install -y xvfb
-      - run: xvfb-run -a npm run test:capture
+      - run: xvfb-run -a -s "-screen 0 1280x1024x24 -nolisten tcp" npm run test:capture
 
   gitleaks:
     name: secret scan

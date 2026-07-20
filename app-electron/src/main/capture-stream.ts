@@ -17,6 +17,8 @@ interface PendingRequest {
 }
 
 export class CaptureStream {
+  private static readonly ENUMERATION_RETRIES = 2
+  private static readonly ENUMERATION_RETRY_DELAY_MS = 250
   private window: BrowserWindow | null = null
   private sourceId: string | null = null
   private trustedWindowSource: TrustedWindowCaptureSource | null = null
@@ -140,12 +142,40 @@ export class CaptureStream {
 
   private async resolveSource(): Promise<DesktopCapturerSource> {
     if (!this.sourceId) throw new Error('No capture source selected')
-    const sources = await desktopCapturer.getSources({ types: ['screen', 'window'], thumbnailSize: { width: 0, height: 0 } })
+    const sources = await this.enumerateSources()
     const source = this.sourceId === 'portal' ? sources[0] : sources.find(candidate => candidate.id === this.sourceId)
     if (source) return source
-    if (!this.trustedWindowSource) throw new Error(`Capture source no longer exists: ${this.sourceId}`)
-    const trusted = validateTrustedWindowCapture(this.sourceId, this.trustedWindowSource, process.platform)
-    return { id: trusted.id, name: trusted.name, thumbnail: nativeImage.createEmpty(), display_id: '', appIcon: nativeImage.createEmpty() }
+    if (this.trustedWindowSource) {
+      const trusted = validateTrustedWindowCapture(this.sourceId, this.trustedWindowSource, process.platform)
+      return CaptureStream.describeSource(trusted.id, trusted.name)
+    }
+    if (this.hasLostEveryScreen(sources)) return CaptureStream.describeSource(this.sourceId, this.sourceId)
+    throw new Error(`Capture source no longer exists: ${this.sourceId}`)
+  }
+
+  private async enumerateSources(): Promise<DesktopCapturerSource[]> {
+    let sources = await CaptureStream.getSources()
+    for (let attempt = 0; attempt < CaptureStream.ENUMERATION_RETRIES && this.hasLostEveryScreen(sources); attempt += 1) {
+      await new Promise(resolve => setTimeout(resolve, CaptureStream.ENUMERATION_RETRY_DELAY_MS))
+      sources = await CaptureStream.getSources()
+    }
+    return sources
+  }
+
+  // A selected screen only really disappears while the remaining screens still enumerate. Losing
+  // every screen at once means the platform capturer itself failed — X11 drops the whole display
+  // list when webrtc cannot initialize its pixel buffer — so the selection is still valid.
+  private hasLostEveryScreen(sources: DesktopCapturerSource[]): boolean {
+    if (!this.sourceId?.startsWith('screen:')) return false
+    return !sources.some(candidate => candidate.id.startsWith('screen:'))
+  }
+
+  private static getSources(): Promise<DesktopCapturerSource[]> {
+    return desktopCapturer.getSources({ types: ['screen', 'window'], thumbnailSize: { width: 0, height: 0 } })
+  }
+
+  private static describeSource(id: string, name: string): DesktopCapturerSource {
+    return { id, name, thumbnail: nativeImage.createEmpty(), display_id: '', appIcon: nativeImage.createEmpty() }
   }
 
   private request(request: CaptureWorkerRequest): Promise<CaptureWorkerResult> {
