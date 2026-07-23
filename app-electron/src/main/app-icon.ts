@@ -1,7 +1,7 @@
 import { Resvg } from '@resvg/resvg-js'
 import { nativeImage, type NativeImage } from 'electron'
 
-// Same artwork as build/icon.svg (the installer icon); rendered in-process like the
+// Same artwork as buildResources/icon.svg (the installer icon); rendered in-process like the
 // tray icon so dev and packaged windows both get it without bundling asset paths.
 const APP_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>

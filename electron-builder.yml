@@ -15,6 +15,7 @@ asarUnpack:
   - "node_modules/@tesseract.js-data/eng/**/*"
 directories:
   output: release
+  buildResources: buildResources
 files:
   - app-electron/out/**/*
   - package.json
@@ -34,7 +35,7 @@ publish:
     owner: ludekvodicka
     repo: ScreenMCP
 win:
-  icon: build/icon.png
+  icon: buildResources/icon.png
   target:
     - nsis
     - portable
@@ -45,7 +46,7 @@ nsis:
 portable:
   artifactName: "${productName}-Portable-${version}-${arch}.${ext}"
 mac:
-  icon: build/icon.png
+  icon: buildResources/icon.png
   category: public.app-category.developer-tools
   identity: null
   target:
@@ -53,7 +54,7 @@ mac:
 dmg:
   artifactName: "${productName}-${version}-${arch}.${ext}"
 linux:
-  icon: build/icon.png
+  icon: buildResources/icon.png
   category: Utility;Development
   executableName: screenmcp
   target:
