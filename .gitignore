@@ -21,3 +21,4 @@ coverage/
 *.pfx
 *.log
 .DS_Store
+.axapp.json

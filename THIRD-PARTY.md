@@ -1,8 +1,9 @@
 # Third-party software
 
 ScreenMCP is MIT-licensed. Its packaged application also contains the npm runtime dependencies
-below. This inventory is generated from `package-lock.json`, including optional native packages
-for every supported OS; the dependency licenses remain in force for their respective components.
+below. This inventory is generated from the installed pnpm production tree; cross-platform native
+binaries are attributed by family under "Native and WASM payloads". The dependency licenses remain
+in force for their respective components.
 
 ## Direct runtime dependencies
 
@@ -28,26 +29,10 @@ for every supported OS; the dependency licenses remain in force for their respec
 - `tesseract.js` and `tesseract.js-core` ship the Apache-2.0 OCR/WASM runtime; bundled English
   trained data comes from `@tesseract.js-data/eng` under MIT.
 
-## Locked runtime inventory by declared license
-
-### 0BSD
-
-- `tslib@2.8.1`
+## Runtime inventory by declared license
 
 ### Apache-2.0
 
-- `@img/sharp-darwin-arm64@0.35.3`
-- `@img/sharp-darwin-x64@0.35.3`
-- `@img/sharp-freebsd-wasm32@0.35.3`
-- `@img/sharp-linux-arm@0.35.3`
-- `@img/sharp-linux-arm64@0.35.3`
-- `@img/sharp-linux-ppc64@0.35.3`
-- `@img/sharp-linux-riscv64@0.35.3`
-- `@img/sharp-linux-s390x@0.35.3`
-- `@img/sharp-linux-x64@0.35.3`
-- `@img/sharp-linuxmusl-arm64@0.35.3`
-- `@img/sharp-linuxmusl-x64@0.35.3`
-- `@img/sharp-webcontainers-wasm32@0.35.3`
 - `detect-libc@2.1.2`
 - `exponential-backoff@3.1.3`
 - `idb-keyval@6.3.0`
@@ -58,13 +43,7 @@ for every supported OS; the dependency licenses remain in force for their respec
 
 ### Apache-2.0 AND LGPL-3.0-or-later
 
-- `@img/sharp-win32-arm64@0.35.3`
-- `@img/sharp-win32-ia32@0.35.3`
 - `@img/sharp-win32-x64@0.35.3`
-
-### Apache-2.0 AND LGPL-3.0-or-later AND MIT
-
-- `@img/sharp-wasm32@0.35.3`
 
 ### BlueOak-1.0.0
 
@@ -128,49 +107,21 @@ for every supported OS; the dependency licenses remain in force for their respec
 - `yallist@4.0.0`
 - `zod-to-json-schema@3.25.2`
 
-### LGPL-3.0-or-later
-
-- `@img/sharp-libvips-darwin-arm64@1.3.2`
-- `@img/sharp-libvips-darwin-x64@1.3.2`
-- `@img/sharp-libvips-linux-arm@1.3.2`
-- `@img/sharp-libvips-linux-arm64@1.3.2`
-- `@img/sharp-libvips-linux-ppc64@1.3.2`
-- `@img/sharp-libvips-linux-riscv64@1.3.2`
-- `@img/sharp-libvips-linux-s390x@1.3.2`
-- `@img/sharp-libvips-linux-x64@1.3.2`
-- `@img/sharp-libvips-linuxmusl-arm64@1.3.2`
-- `@img/sharp-libvips-linuxmusl-x64@1.3.2`
-
 ### MIT
 
-- `@emnapi/runtime@1.11.2`
 - `@hono/node-server@1.19.14`
 - `@img/colour@1.1.0`
-- `@koromix/koffi-darwin-arm64@3.1.1`
-- `@koromix/koffi-darwin-x64@3.1.1`
-- `@koromix/koffi-freebsd-arm64@3.1.1`
-- `@koromix/koffi-freebsd-ia32@3.1.1`
-- `@koromix/koffi-freebsd-x64@3.1.1`
-- `@koromix/koffi-linux-arm64@3.1.1`
-- `@koromix/koffi-linux-ia32@3.1.1`
-- `@koromix/koffi-linux-loong64@3.1.1`
-- `@koromix/koffi-linux-riscv64@3.1.1`
-- `@koromix/koffi-linux-x64@3.1.1`
-- `@koromix/koffi-openbsd-ia32@3.1.1`
-- `@koromix/koffi-openbsd-x64@3.1.1`
-- `@koromix/koffi-win32-arm64@3.1.1`
-- `@koromix/koffi-win32-ia32@3.1.1`
 - `@koromix/koffi-win32-x64@3.1.1`
 - `@modelcontextprotocol/sdk@1.29.0`
+- `@pkgjs/parseargs@0.11.0`
 - `@tesseract.js-data/eng@1.0.0`
+- `@types/node@26.1.1`
 - `accepts@2.0.0`
 - `agent-base@7.1.4`
 - `ajv-formats@3.0.1`
 - `ajv@8.20.0`
 - `ansi-regex@5.0.1`
-- `ansi-regex@6.2.2`
 - `ansi-styles@4.3.0`
-- `ansi-styles@6.2.3`
 - `balanced-match@1.0.2`
 - `bmp-js@0.1.0`
 - `body-parser@2.3.0`
@@ -192,11 +143,9 @@ for every supported OS; the dependency licenses remain in force for their respec
 - `debug@4.4.3`
 - `depd@2.0.0`
 - `dunder-proto@1.0.1`
-- `eastasianwidth@0.2.0`
 - `ee-first@1.1.1`
 - `electron-updater@6.8.9`
 - `emoji-regex@8.0.0`
-- `emoji-regex@9.2.2`
 - `encodeurl@2.0.0`
 - `encoding@0.1.13`
 - `env-paths@2.2.1`
@@ -221,6 +170,7 @@ for every supported OS; the dependency licenses remain in force for their respec
 - `get-proto@1.0.1`
 - `get-windows@9.3.0`
 - `gopd@1.2.0`
+- `has-flag@4.0.0`
 - `has-symbols@1.1.0`
 - `hasown@2.0.4`
 - `hono@4.12.30`
@@ -289,39 +239,25 @@ for every supported OS; the dependency licenses remain in force for their respec
 - `socks-proxy-agent@8.0.5`
 - `socks@2.8.9`
 - `statuses@2.0.2`
-- `string-width-cjs@4.2.3`
 - `string-width@4.2.3`
-- `string-width@5.1.2`
-- `strip-ansi-cjs@6.0.1`
 - `strip-ansi@6.0.1`
-- `strip-ansi@7.2.0`
+- `supports-color@7.2.0`
 - `tiny-typed-emitter@2.1.0`
 - `tinyglobby@0.2.17`
 - `toidentifier@1.0.1`
 - `tr46@0.0.3`
 - `type-is@2.1.0`
+- `undici-types@8.3.0`
 - `universalify@2.0.1`
 - `unpipe@1.0.0`
 - `vary@1.1.2`
 - `whatwg-url@5.0.0`
-- `wrap-ansi-cjs@7.0.0`
-- `wrap-ansi@8.1.0`
+- `wrap-ansi@7.0.0`
 - `zlibjs@0.3.1`
 - `zod@4.4.3`
 
 ### MPL-2.0
 
-- `@resvg/resvg-js-android-arm-eabi@2.6.2`
-- `@resvg/resvg-js-android-arm64@2.6.2`
-- `@resvg/resvg-js-darwin-arm64@2.6.2`
-- `@resvg/resvg-js-darwin-x64@2.6.2`
-- `@resvg/resvg-js-linux-arm-gnueabihf@2.6.2`
-- `@resvg/resvg-js-linux-arm64-gnu@2.6.2`
-- `@resvg/resvg-js-linux-arm64-musl@2.6.2`
-- `@resvg/resvg-js-linux-x64-gnu@2.6.2`
-- `@resvg/resvg-js-linux-x64-musl@2.6.2`
-- `@resvg/resvg-js-win32-arm64-msvc@2.6.2`
-- `@resvg/resvg-js-win32-ia32-msvc@2.6.2`
 - `@resvg/resvg-js-win32-x64-msvc@2.6.2`
 - `@resvg/resvg-js@2.6.2`
 
@@ -329,6 +265,6 @@ for every supported OS; the dependency licenses remain in force for their respec
 
 - `argparse@2.0.1`
 
-License identifiers are SPDX expressions copied from the exact lock entries. Full license
-texts are retained in the installed npm packages and are available from each package source.
+License identifiers are SPDX expressions from each installed package. Full license texts are
+retained in the installed npm packages and are available from each package source.
 

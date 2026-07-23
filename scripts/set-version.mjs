@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 
 const version = process.argv[2]
 if (!version || !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)) {
-  console.error('usage: npm run version:set -- X.Y.Z')
+  console.error('usage: pnpm run version:set -- X.Y.Z')
   process.exit(2)
 }
 
@@ -21,13 +21,6 @@ for (const relative of manifests) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`)
 }
 
-const lockPath = resolve('package-lock.json')
-const lock = JSON.parse(readFileSync(lockPath, 'utf8'))
-lock.version = version
-for (const key of ['', 'app-electron', 'core/capture', 'core/mcp']) {
-  const entry = lock.packages?.[key]
-  if (!entry) throw new Error(`package-lock.json is missing packages[${JSON.stringify(key)}]`)
-  entry.version = version
-}
-writeFileSync(lockPath, `${JSON.stringify(lock, null, 2)}\n`)
-console.log(`ScreenMCP version -> ${version}`)
+// pnpm-lock.yaml carries no separate per-workspace version to bump; run `pnpm install` after this to
+// refresh the lockfile.
+console.log(`ScreenMCP version -> ${version} (run "pnpm install" to update pnpm-lock.yaml)`)

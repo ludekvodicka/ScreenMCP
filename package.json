@@ -29,17 +29,17 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:capture": "npm run build && vitest run --config vitest.e2e.config.ts",
-    "check": "npm run release:check && npm run third-party:check && npm run lint && npm run typecheck && npm test && npm run build",
+    "test:capture": "pnpm run build && vitest run --config vitest.e2e.config.ts",
+    "check": "pnpm run release:check && pnpm run third-party:check && pnpm run lint && pnpm run typecheck && pnpm test && pnpm run build",
     "version:set": "node scripts/set-version.mjs",
     "release:check": "node scripts/check-release-version.mjs",
     "release:smoke": "node scripts/smoke-release-artifacts.mjs",
     "third-party:check": "node scripts/generate-third-party.mjs --check",
-    "package": "npm run build && electron-builder --config electron-builder.yml --publish never",
-    "package:win": "npm run build && electron-builder --win --config electron-builder.yml --publish never",
-    "package:mac": "npm run build && electron-builder --mac --config electron-builder.yml --publish never",
-    "package:linux": "npm run build && electron-builder --linux --config electron-builder.yml --publish never",
-    "package:dir": "npm run build && electron-builder --dir --config electron-builder.yml --publish never"
+    "package": "pnpm run build && electron-builder --config electron-builder.yml --publish never",
+    "package:win": "pnpm run build && electron-builder --win --config electron-builder.yml --publish never",
+    "package:mac": "pnpm run build && electron-builder --mac --config electron-builder.yml --publish never",
+    "package:linux": "pnpm run build && electron-builder --linux --config electron-builder.yml --publish never",
+    "package:dir": "pnpm run build && electron-builder --dir --config electron-builder.yml --publish never"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",
@@ -70,8 +70,5 @@
     "vite": "7.3.6",
     "vitest": "4.1.10"
   },
-  "overrides": {
-    "@mapbox/node-pre-gyp": "2.0.3",
-    "node-gyp": "11.4.2"
-  }
+  "packageManager": "pnpm@11.15.1"
 }
