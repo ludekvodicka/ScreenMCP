@@ -1,3 +1,5 @@
+import type { AutoUpdateApi } from '../../../shared/electron/autoUpdate/common/autoUpdateApi'
+
 export type CaptureState =
   | { kind: 'disconnected' }
   | { kind: 'connected'; clients: string[] }
@@ -150,38 +152,6 @@ export type ShortcutAction = 'pickRegion' | 'pickWindow'
 export type ShortcutSettings = Record<ShortcutAction, string | null>
 export type ShortcutStatus = Record<ShortcutAction, 'active' | 'unavailable' | 'off'>
 
-export type UpdateChannel = 'github' | 'none'
-export type UpdatePhase = 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'installing' | 'error'
-
-export interface UpdateDownloadProgress {
-  version: string
-  percent: number
-  transferred: number
-  total: number
-  bytesPerSecond: number
-}
-
-export interface UpdateStatus {
-  channel: UpdateChannel
-  reason: string
-  autoCheck: boolean
-  checkIntervalMinutes: number
-  running: string
-  phase: UpdatePhase
-  progress: UpdateDownloadProgress | null
-  lastError: string | null
-  lastCheckAt: number | null
-  lastCheckOutcome: string | null
-  pendingVersion: string | null
-  snoozedUntil: number
-}
-
-export interface UpdatePrompt {
-  version: string
-  running: string
-  trigger: 'background' | 'manual'
-}
-
 export interface FramePolicy {
   format: 'jpeg' | 'png'
   jpegQuality: number
@@ -199,7 +169,6 @@ export interface BootstrapState {
   wayland: boolean
   selection: SourceSelection | null
   macScreenPermission: MacScreenPermission
-  updateStatus: UpdateStatus
   controlState: ControlState
   interactiveRequests: InteractiveRequest[]
 }
@@ -228,21 +197,13 @@ export interface ScreenMcpApi {
   setAccessMode(mode: AccessMode): Promise<void>
   respondInteractiveRequest(id: string, decision: InteractiveRequestDecision): Promise<void>
   getShortcutStatus(): Promise<ShortcutStatus>
-  getUpdateStatus(): Promise<UpdateStatus>
-  checkForUpdates(): Promise<UpdateStatus>
-  downloadUpdate(): Promise<UpdateStatus>
-  installUpdate(): Promise<void>
-  snoozeUpdate(hours: number): Promise<UpdateStatus>
-  openReleasePage(): Promise<void>
+  autoUpdate: AutoUpdateApi
   onSourceChanged(callback: (selection: SourceSelection | null) => void): () => void
   onAuditEntry(callback: (entry: AuditEntry) => void): () => void
   onCaptureState(callback: (state: CaptureState) => void): () => void
   onStopped(callback: (stopped: boolean) => void): () => void
   onControlState(callback: (state: ControlState) => void): () => void
   onInteractiveRequests(callback: (requests: InteractiveRequest[]) => void): () => void
-  onUpdateStatus(callback: (status: UpdateStatus) => void): () => void
-  onUpdatePrompt(callback: (prompt: UpdatePrompt) => void): () => void
-  onUpdateOpen(callback: () => void): () => void
 }
 
 export type CaptureWorkerRequest =

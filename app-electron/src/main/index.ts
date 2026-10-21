@@ -1,5 +1,8 @@
 import { app, Notification, screen } from 'electron'
 import { join } from 'node:path'
+import type { DtoAutoUpdateStatus } from '../../../shared/electron/autoUpdate/common/autoUpdate.dto'
+import type { AutoUpdateLogHandler } from '../../../shared/electron/autoUpdate/main/autoUpdate.types'
+import { AutoUpdateMain } from '../../../shared/electron/autoUpdate/main/autoUpdateMain'
 import { AppState } from './app-state'
 import { AccessModeController, applyStartupAccessMode } from './access-mode'
 import { AuditLog } from './audit-log'
@@ -22,11 +25,8 @@ import { McpRouter } from './mcp-router'
 import { MacScreenPermissionService } from './permissions-macos'
 import { OcrReader } from './ocr'
 import { SettingsStore } from './settings-store'
-import { publish } from './streams'
 import { ScreenMcpTray } from './tray'
-import { ElectronUpdaterAdapter } from './update/electron-updater-adapter'
-import { UpdateManager } from './update/update-manager'
-import { resolveUpdateRuntime } from './update/update-runtime'
+import { appendUpdateLog, type UpdateLogEntry } from './update/update-log-store'
 import { configDir, updateLogPath } from './paths'
 import { installBundledAgentSkills, type SkillInstallResult } from './skill-installer'
 import { createMainWindow, getMainWindow, setQuitting, showMainWindow } from './window'
@@ -48,11 +48,13 @@ let mcpRouter: McpRouter | null = null
 let mcpClients: McpClients | null = null
 let tray: ScreenMcpTray | null = null
 let sourcePicker: DesktopSourcePicker | null = null
-let updates: UpdateManager | null = null
+let autoUpdate: AutoUpdateMain | null = null
 let controlService: ElectronControlService | null = null
 let interactiveRequests: InteractiveRequestService | null = null
 let shortcuts: GlobalShortcuts | null = null
-let updateUnsubscribers: (() => void)[] = []
+let unsubscribeAutoUpdate: (() => void) | null = null
+let lastUpdateState: DtoAutoUpdateStatus['state']['kind'] | null = null
+let readyNotifiedVersion: string | null = null
 
 app.on('second-instance', showMainWindow)
 app.on('before-quit', () => { setQuitting(true); controlService?.disarm('quit') })
@@ -69,31 +71,16 @@ if (singleInstance) {
     applyStartupAccessMode(appState, settings.get().accessModeDefault)
     smokeLog('settings loaded')
     await installAgentSkills()
-    const updateResolution = resolveUpdateRuntime({
-      packaged: app.isPackaged,
-      platform: process.platform,
-      portable: Boolean(process.env.PORTABLE_EXECUTABLE_DIR),
-      settings: settings.get().updates,
+    const updateSettings = settings.get().updates
+    const updater = new AutoUpdateMain({
+      releasePageUrl: version => version ? `https://github.com/ludekvodicka/ScreenMCP/releases/tag/v${version}` : 'https://github.com/ludekvodicka/ScreenMCP/releases',
+      backgroundChecks: updateSettings.autoCheck,
+      intervalMinutes: updateSettings.checkIntervalMinutes,
+      log: updateLog,
     })
-    updates = new UpdateManager(
-      updateResolution,
-      app.getVersion(),
-      updateResolution.channel === 'github' ? new ElectronUpdaterAdapter() : null,
-      updateLogPath(),
-    )
-    let notifiedVersion: string | null = null
-    updateUnsubscribers = [
-      updates.subscribe(status => publish('update:changed', status)),
-      updates.onPrompt(prompt => {
-        publish('update:prompt', prompt)
-        if (prompt.trigger !== 'background' || notifiedVersion === prompt.version || !Notification.isSupported()) return
-        notifiedVersion = prompt.version
-        const notification = new Notification({ title: `ScreenMCP ${prompt.version} is available`, body: 'Open ScreenMCP to download the update.' })
-        notification.on('click', () => { showMainWindow(); publish('update:open') })
-        notification.show()
-      }),
-    ]
-    updates.start()
+    autoUpdate = updater
+    unsubscribeAutoUpdate = updater.subscribe(followUpdateStatus)
+    updater.start()
     host = new McpHost(await loadOrCreateToken())
     const endpoint = await host.start()
     smokeLog('host started')
@@ -131,7 +118,7 @@ if (singleInstance) {
     })
     const picker = sourcePicker
     shortcuts = new GlobalShortcuts(mode => picker.pick(mode), () => permissions.canCapture(), showMainWindow)
-    registerIpc(appState, settings, host, capture, captureService, controlService, accessMode, sourcePicker, audit, permissions, updates, shortcuts, interactiveRequests)
+    registerIpc(appState, settings, host, capture, captureService, controlService, accessMode, sourcePicker, audit, permissions, shortcuts, interactiveRequests)
     const smokeOutput = process.env.SCREENMCP_CAPTURE_SMOKE
     if (smokeOutput) {
       await runCaptureSmoke(capture, captureService, smokeOutput)
@@ -141,7 +128,7 @@ if (singleInstance) {
       return
     }
     shortcuts.apply(settings.get().shortcuts)
-    tray = new ScreenMcpTray(appState, endpoint.port, updates, controlService)
+    tray = new ScreenMcpTray(appState, endpoint.port, updater, controlService)
     createAppWindow()
     host.setMcpHandler(mcpRouter.handle)
   }).catch(error => {
@@ -154,9 +141,7 @@ if (singleInstance) {
 }
 
 async function shutdown(): Promise<void> {
-  for (const unsubscribe of updateUnsubscribers.splice(0)) unsubscribe()
-  updates?.stop()
-  updates = null
+  stopAutoUpdate()
   shortcuts?.dispose()
   shortcuts = null
   sourcePicker?.dispose()
@@ -180,20 +165,17 @@ app.on('will-quit', event => {
   const currentCapture = captureStream
   const currentRouter = mcpRouter
   const currentPicker = sourcePicker
-  const currentUpdates = updates
   const currentControl = controlService
   const currentInteractiveRequests = interactiveRequests
   host = null
   captureStream = null
   mcpRouter = null
   sourcePicker = null
-  updates = null
   controlService = null
   interactiveRequests = null
-  for (const unsubscribe of updateUnsubscribers.splice(0)) unsubscribe()
+  stopAutoUpdate()
   shortcuts?.dispose()
   shortcuts = null
-  currentUpdates?.stop()
   currentPicker?.dispose()
   mcpClients?.dispose()
   mcpClients = null
@@ -205,6 +187,49 @@ app.on('will-quit', event => {
   }
   void Promise.all([currentRouter?.close(), current?.stop(), currentCapture?.dispose(), disposeControl()]).finally(() => app.quit())
 })
+
+const updateLog: AutoUpdateLogHandler = {
+  info: message => writeUpdateLog({ event: 'updater', level: 'info', message }),
+  warn: message => writeUpdateLog({ event: 'updater', level: 'warn', message }),
+  error: message => writeUpdateLog({ event: 'updater', level: 'error', message }),
+}
+
+function writeUpdateLog(entry: Omit<UpdateLogEntry, 'ts'>): void {
+  try { appendUpdateLog(updateLogPath(), entry) }
+  catch (error) { console.error('ScreenMCP update log failed', error) }
+}
+
+function followUpdateStatus(status: DtoAutoUpdateStatus): void {
+  const state = status.state
+  const previous = lastUpdateState
+  lastUpdateState = state.kind
+  if (state.kind !== previous) {
+    const message = state.kind === 'off' ? state.reason : state.kind === 'failed' ? state.message : undefined
+    const version = 'release' in state ? state.release?.version ?? null : null
+    writeUpdateLog({ event: 'state', mode: status.mode, running: status.running, state: state.kind, version, ...(message ? { message } : {}) })
+  }
+  // Close-to-tray would hide the window instead of letting the installer quit the app.
+  if (state.kind === 'installing') setQuitting(true)
+  else if (previous === 'installing' && state.kind === 'failed') setQuitting(false)
+  if (state.kind === 'ready' && readyNotifiedVersion !== state.release.version) {
+    readyNotifiedVersion = state.release.version
+    notifyUpdateReady(state.release.version)
+  }
+}
+
+function notifyUpdateReady(version: string): void {
+  if (!Notification.isSupported()) return
+  const notification = new Notification({ title: `ScreenMCP ${version} is ready`, body: 'Choose Restart and install in ScreenMCP or its tray menu. It also installs on the next quit.' })
+  notification.on('click', showMainWindow)
+  notification.show()
+}
+
+function stopAutoUpdate(): void {
+  unsubscribeAutoUpdate?.()
+  unsubscribeAutoUpdate = null
+  autoUpdate?.stop()
+  autoUpdate = null
+}
 
 async function installAgentSkills(): Promise<void> {
   const bundleRoot = app.isPackaged ? join(process.resourcesPath, 'skills') : join(app.getAppPath(), 'skills')

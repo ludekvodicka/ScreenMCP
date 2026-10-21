@@ -3,7 +3,7 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['node_modules/**', 'app-electron/out/**', 'out/**', 'release/**', 'coverage/**', '.aidocs/**', 'eslint.config.mjs'] },
+  { ignores: ['node_modules/**', 'app-electron/out/**', 'out/**', 'release/**', 'coverage/**', '.aidocs/**', 'shared/**', 'eslint.config.mjs'] },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {

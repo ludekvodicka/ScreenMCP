@@ -16,10 +16,10 @@ describe('update log store', () => {
     directories.push(directory)
     const path = join(directory, 'nested', 'update-log.jsonl')
     expect(readUpdateLogTail(path)).toEqual([])
-    appendUpdateLog(path, { event: 'boot-resolution', channel: 'github', reason: 'installed' })
-    appendUpdateLog(path, { event: 'check', channel: 'github', found: '0.2.0' })
+    appendUpdateLog(path, { event: 'updater', level: 'warn', message: 'Background update check failed: offline' })
+    appendUpdateLog(path, { event: 'state', mode: 'automatic', running: '0.1.0', state: 'ready', version: '0.2.0' })
     expect(readUpdateLogTail(path)).toHaveLength(2)
-    expect(readUpdateLogTail(path, 1)[0]).toMatchObject({ event: 'check', found: '0.2.0' })
+    expect(readUpdateLogTail(path, 1)[0]).toMatchObject({ event: 'state', state: 'ready', version: '0.2.0' })
   })
 
   it('trims an oversized log on whole parseable lines', () => {
@@ -27,11 +27,11 @@ describe('update log store', () => {
     directories.push(directory)
     const path = join(directory, 'update-log.jsonl')
     for (let index = 0; index < 4_000; index++)
-      appendUpdateLog(path, { event: 'check', channel: 'github', detail: `${index}:${'x'.repeat(200)}` })
+      appendUpdateLog(path, { event: 'updater', level: 'info', message: `${index}:${'x'.repeat(200)}` })
     const entries = readUpdateLogTail(path, 10_000)
     expect(entries.length).toBeGreaterThan(0)
     expect(entries.length).toBeLessThan(4_000)
-    expect(entries.at(-1)?.detail).toContain('3999:')
+    expect(entries.at(-1)?.message).toContain('3999:')
   })
 
   it('skips malformed historical lines', () => {

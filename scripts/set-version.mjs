@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 
 const version = process.argv[2]
 if (!version || !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)) {
-  console.error('usage: pnpm run version:set -- X.Y.Z')
+  console.error('usage: pnpm run version:set X.Y.Z')
   process.exit(2)
 }
 

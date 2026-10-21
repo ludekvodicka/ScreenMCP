@@ -1,27 +1,19 @@
 import { appendFileSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
+import type { AutoUpdateMode, AutoUpdateState } from '../../../../shared/electron/autoUpdate/common/autoUpdate.dto'
 
-export type UpdateLogEvent =
-  | 'boot-resolution'
-  | 'check'
-  | 'download-start'
-  | 'downloaded'
-  | 'prompt-shown'
-  | 'prompt-suppressed'
-  | 'user-choice'
-  | 'install'
-  | 'channel-none'
-  | 'error'
+// Lines written by earlier versions use other event names; readUpdateLogTail returns them unchanged.
+export type UpdateLogEvent = 'updater' | 'state'
 
 export interface UpdateLogEntry {
   ts: number
   event: UpdateLogEvent
-  channel?: 'github' | 'none'
-  trigger?: 'background' | 'manual'
+  level?: 'info' | 'warn' | 'error'
+  message?: string
+  mode?: AutoUpdateMode
   running?: string
-  found?: string | null
-  reason?: string
-  detail?: string
+  state?: AutoUpdateState['kind']
+  version?: string | null
 }
 
 const MAX_BYTES = 512 * 1024

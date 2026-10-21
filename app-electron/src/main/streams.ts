@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron'
-import type { AuditEntry, CaptureState, ControlState, InteractiveRequest, SourceSelection, UpdatePrompt, UpdateStatus } from '../shared/contracts'
+import type { AuditEntry, CaptureState, ControlState, InteractiveRequest, SourceSelection } from '../shared/contracts'
 
 interface StreamMap {
   'capture:state': [CaptureState]
@@ -8,9 +8,6 @@ interface StreamMap {
   'audit:entry': [AuditEntry]
   'control:state': [ControlState]
   'interactive:requests': [InteractiveRequest[]]
-  'update:changed': [UpdateStatus]
-  'update:prompt': [UpdatePrompt]
-  'update:open': []
 }
 
 export function publish<K extends keyof StreamMap>(channel: K, ...args: StreamMap[K]): void {

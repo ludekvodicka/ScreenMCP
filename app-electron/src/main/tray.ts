@@ -1,26 +1,28 @@
 import { Resvg } from '@resvg/resvg-js'
-import { app, Menu, nativeImage, shell, Tray, type NativeImage } from 'electron'
-import type { ControlState, UpdateStatus } from '../shared/contracts'
+import { app, Menu, nativeImage, Tray, type MenuItemConstructorOptions, type NativeImage } from 'electron'
+import type { DtoAutoUpdateStatus } from '../../../shared/electron/autoUpdate/common/autoUpdate.dto'
+import type { AutoUpdateMain } from '../../../shared/electron/autoUpdate/main/autoUpdateMain'
+import type { ControlState } from '../shared/contracts'
 import type { AppState, AppStateSnapshot } from './app-state'
-import { publish } from './streams'
-import { trayColor, trayVisualState } from './tray-state'
-import type { UpdateManager } from './update/update-manager'
+import { trayColor, trayUpdateItem, trayVisualState, type TrayUpdateAction } from './tray-state'
 import type { ElectronControlService } from './control-service'
 import { getMainWindow, setQuitting, showMainWindow } from './window'
+
+type TrayAutoUpdate = Pick<AutoUpdateMain, 'getStatus' | 'subscribe' | 'check' | 'install'>
 
 const iconCache = new Map<ReturnType<typeof trayVisualState>, NativeImage>()
 
 export class ScreenMcpTray {
   private tray: Tray
   private snapshot: AppStateSnapshot
-  private updateStatus: UpdateStatus
+  private updateStatus: DtoAutoUpdateStatus
   private controlState: ControlState
   private lastLookAt: number | null = null
   private unsubscribeAppState: () => void
   private unsubscribeUpdates: () => void
   private unsubscribeControl: () => void
 
-  constructor(private appState: AppState, private port: number, private updates: UpdateManager, private control: ElectronControlService) {
+  constructor(private appState: AppState, private port: number, private updates: TrayAutoUpdate, private control: ElectronControlService) {
     this.snapshot = { stopped: appState.isStopped(), captureState: appState.getCaptureState() }
     this.updateStatus = updates.getStatus()
     this.controlState = control.getState()
@@ -59,21 +61,23 @@ export class ScreenMcpTray {
       { label: 'STOP serving', type: 'checkbox', checked: this.snapshot.stopped, click: item => this.appState.setStopped(item.checked) },
       ...(this.controlState.armed ? [{ label: 'Turn off interaction', click: () => this.control.disarm('manual') } as const] : []),
       { type: 'separator' },
-      { label: updateMenuLabel(this.updateStatus), enabled: this.updateStatus.phase !== 'checking' && this.updateStatus.phase !== 'downloading' && this.updateStatus.phase !== 'installing', click: () => void this.openUpdates() },
-      { type: 'separator' },
+      ...this.updateItems(),
       { label: 'Quit', click: () => { setQuitting(true); app.quit() } },
     ]))
   }
 
-  private async openUpdates(): Promise<void> {
-    if (this.updateStatus.channel === 'none') {
-      await shell.openExternal('https://github.com/ludekvodicka/ScreenMCP/releases/latest')
-      return
-    } else if (this.updateStatus.channel !== 'github')
-      throw new Error(`Unknown update channel: ${JSON.stringify(this.updateStatus.channel)}`)
-    showMainWindow()
-    publish('update:open')
-    if (this.updateStatus.phase === 'idle' || this.updateStatus.phase === 'error') await this.updates.check('manual')
+  private updateItems(): MenuItemConstructorOptions[] {
+    const item = trayUpdateItem(this.updateStatus)
+    if (!item) return []
+    return [{ label: item.label, enabled: item.action !== 'none', click: () => this.runUpdateAction(item.action) }, { type: 'separator' }]
+  }
+
+  private runUpdateAction(action: TrayUpdateAction): void {
+    if (action === 'check') void this.updates.check()
+    else if (action === 'show') showMainWindow()
+    else if (action === 'install') this.updates.install()
+    else if (action === 'none') return
+    else throw new Error(`Unknown tray update action: ${JSON.stringify(action)}`)
   }
 
   private tooltip(): string {
@@ -83,19 +87,6 @@ export class ScreenMcpTray {
     const lastLook = this.lastLookAt ? ` · last look ${new Date(this.lastLookAt).toLocaleTimeString()}` : ''
     return `ScreenMCP · ${status} · ${clients} · :${this.port}${lastLook}`
   }
-}
-
-function updateMenuLabel(status: UpdateStatus): string {
-  if (status.channel === 'none') return 'Download updates manually…'
-  else if (status.channel !== 'github') throw new Error(`Unknown update channel: ${JSON.stringify(status.channel)}`)
-  if (status.phase === 'idle') return 'Check for updates…'
-  else if (status.phase === 'checking') return 'Checking for updates…'
-  else if (status.phase === 'available') return `Update ${status.pendingVersion ?? ''} available…`
-  else if (status.phase === 'downloading') return `Downloading ${status.pendingVersion ?? ''} · ${Math.round(status.progress?.percent ?? 0)}%`
-  else if (status.phase === 'ready') return `Restart to install ${status.pendingVersion ?? ''}…`
-  else if (status.phase === 'installing') return `Installing ${status.pendingVersion ?? ''}…`
-  else if (status.phase === 'error') return 'Update failed…'
-  else throw new Error(`Unknown update phase: ${JSON.stringify(status.phase)}`)
 }
 
 function unknownState(value: never): never {

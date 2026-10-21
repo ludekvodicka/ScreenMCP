@@ -1,15 +1,17 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { basename, resolve } from 'node:path'
 
-const platform = process.argv[2]
-const output = resolve(process.argv[3] ?? 'release')
+const args = process.argv.slice(2)
+if (args[0] === '--') args.shift()
+const platform = args[0]
+const output = resolve(args[1] ?? 'release')
 const contracts = {
   win: { metadata: 'latest.yml', extension: '.exe', required: 'Setup', forbidden: 'Portable' },
   linux: { metadata: 'latest-linux.yml', extension: '.AppImage' },
 }
 const contract = contracts[platform]
 if (!contract) {
-  console.error('usage: npm run release:smoke -- win|linux [output-directory]')
+  console.error('usage: pnpm run release:smoke win|linux [output-directory]')
   process.exit(2)
 }
 

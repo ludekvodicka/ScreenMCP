@@ -1,4 +1,4 @@
-import { ipcMain, shell } from 'electron'
+import { ipcMain } from 'electron'
 import type { AccessMode, AppSettings, BootstrapState, FramePolicy, HighlightRect, InteractiveRequestDecision, MaskRect, PickerMode, SourceSelection } from '../shared/contracts'
 import type { AccessModeController } from './access-mode'
 import type { AppState } from './app-state'
@@ -12,7 +12,6 @@ import type { InteractiveRequestService } from './interactive-request-service'
 import type { McpHost } from './mcp-host'
 import type { MacScreenPermissionService } from './permissions-macos'
 import type { SettingsStore } from './settings-store'
-import type { UpdateManager } from './update/update-manager'
 
 export function registerIpc(
   appState: AppState,
@@ -25,7 +24,6 @@ export function registerIpc(
   sourcePicker: DesktopSourcePicker,
   audit: AuditLog,
   permissions: MacScreenPermissionService,
-  updates: UpdateManager,
   shortcuts: GlobalShortcuts,
   interactiveRequests: InteractiveRequestService,
 ): void {
@@ -38,7 +36,6 @@ export function registerIpc(
     wayland: process.platform === 'linux' && Boolean(process.env.WAYLAND_DISPLAY || process.env.XDG_SESSION_TYPE === 'wayland'),
     selection: capture.getSelection(),
     macScreenPermission: permissions.state(),
-    updateStatus: updates.getStatus(),
     controlState: control.getState(),
     interactiveRequests: interactiveRequests.listPending(),
   }))
@@ -118,13 +115,4 @@ export function registerIpc(
   ipcMain.handle('app:relaunch', () => permissions.relaunch())
   ipcMain.handle('audit:list', (_event, limit?: number) => audit.list(limit))
   ipcMain.handle('audit:thumbnail', (_event, entryId: string) => audit.thumbnail(entryId))
-  ipcMain.handle('updates:status', () => updates.getStatus())
-  ipcMain.handle('updates:check', () => updates.check('manual'))
-  ipcMain.handle('updates:download', () => updates.download())
-  ipcMain.handle('updates:install', () => updates.install())
-  ipcMain.handle('updates:snooze', (_event, hours: unknown) => {
-    if (typeof hours !== 'number' || !Number.isFinite(hours)) throw new TypeError('Update snooze hours must be a finite number')
-    return updates.snooze(hours)
-  })
-  ipcMain.handle('updates:open-release', () => shell.openExternal('https://github.com/ludekvodicka/ScreenMCP/releases/latest'))
 }

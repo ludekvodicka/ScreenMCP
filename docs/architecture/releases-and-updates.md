@@ -27,33 +27,45 @@ partially successful matrix from exposing an incomplete update feed.
 
 ## Runtime matrix
 
-| Runtime | Channel | Reason |
+| Runtime | Mode | Behavior |
 | --- | --- | --- |
-| Development | Manual/disabled | Dev builds must not consume the production feed. |
-| Installed Windows (NSIS) | GitHub Releases | Supported by electron-updater. |
-| Windows Portable | Manual | Self-replacement of the portable executable is not attempted. |
-| Packaged Linux | GitHub Releases | Uses the published Linux feed. |
-| Unsigned macOS | Manual | Automatic updates require a signed and notarized application. |
+| Development | Off | No updater access; dev builds must not consume the production feed. |
+| Installed Windows (NSIS) | Automatic | Checks GitHub Releases and downloads a new version in the background. |
+| Packaged Linux (AppImage, deb) | Automatic | Same as installed Windows, from the published Linux feed. |
+| Windows Portable | Notify | Checks only; the app shows the new version and links to its release page. |
+| Unsigned macOS | Notify | Checks only; automatic updates require a signed and notarized application. |
+| Build without `app-update.yml` | Off | The first check reports a missing feed and stops the schedule. |
 
-The update channel is derived from runtime facts and cannot be changed in settings. Settings expose
-only automatic-check enablement and interval.
+The mode is derived from runtime facts and cannot be changed in settings. Settings expose only
+automatic-check enablement and interval; both apply after the next start.
 
-## State machine and consent
+## Update flow
 
-Main owns one observable state:
+The updater comes from the shared `shared/electron/autoUpdate` module (main process, preload bridge,
+renderer hook) and `shared/electron/autoUpdateWidgets` (the header indicator and the update panel).
+Main owns one observable state and broadcasts every change to all windows; the renderer reaches it
+through `window.screenmcp.autoUpdate`.
 
-`idle → checking → available → downloading → ready → installing`
+`idle → checking → current | downloading → ready → installing` in automatic mode;
+`checking → available` in notify mode; `failed` and `off` from any step that cannot continue.
 
-Failures enter `error`. Background check failures return quietly to idle after logging; manual errors
-stay visible. A check never downloads. Only the Download button calls the updater download method.
-After download, `ready` remains stable until Restart & install or a later normal application quit. The
-first `will-quit` pass waits for MCP/capture cleanup and then calls `app.quit()` again; it never uses
-`app.exit()`, so electron-updater receives the normal quit lifecycle and can apply the staged update.
-ScreenMCP does not restart based on MCP client activity and never arbitrarily disconnects clients.
+- **No consent prompt and no snooze:** in automatic mode a found release downloads in the background.
+  ScreenMCP keeps serving the current source during the download.
+- **No automatic restart:** `ready` stays until the user chooses Restart and install (header indicator,
+  update panel, or tray menu) or until a later normal quit installs the staged update.
+  ScreenMCP never restarts based on MCP client activity and never arbitrarily disconnects clients.
+- **Quit lifecycle:** the first `will-quit` pass waits for MCP/capture cleanup and then calls
+  `app.quit()` again; it never uses `app.exit()`, so electron-updater receives the normal quit lifecycle.
+  When the state becomes `installing`, close-to-tray is released so the installer can quit the app.
+- **Failures:** a failed background check keeps the previous state and is only logged (offline is not an
+  update failure). A failed manual check or download shows `failed` with a retry.
+- **Release page:** main composes the URL (`/releases/tag/vX.Y.Z`, or the release list) and opens it only
+  for `https://github.com`; the renderer never supplies a URL.
+- **Notification:** when an update becomes `ready`, ScreenMCP shows one OS notification per release.
 
-Checks begin 45 seconds after startup and repeat every 120 minutes by default. Available updates can
-be snoozed for 1, 2, 4, or 12 hours; manual checks bypass snooze. Decisions and diagnostics append to
-`~/.screenmcp/update-log.jsonl`, trimmed from 512 KiB to roughly 256 KiB on whole-line boundaries.
+Checks begin 45 seconds after startup and repeat every 120 minutes by default. Updater warnings and
+state changes append to `~/.screenmcp/update-log.jsonl`, trimmed from 512 KiB to roughly 256 KiB on
+whole-line boundaries.
 
 ## Signing follow-up
 

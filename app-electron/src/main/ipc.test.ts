@@ -13,7 +13,6 @@ import { registerIpc } from './ipc'
 import type { McpHost } from './mcp-host'
 import type { MacScreenPermissionService } from './permissions-macos'
 import type { SettingsStore } from './settings-store'
-import type { UpdateManager } from './update/update-manager'
 
 const ipc = vi.hoisted(() => ({ handlers: new Map<string, (...args: unknown[]) => unknown>() }))
 
@@ -43,7 +42,6 @@ describe('highlight IPC', () => {
       {} as DesktopSourcePicker,
       {} as AuditLog,
       {} as MacScreenPermissionService,
-      {} as UpdateManager,
       {} as GlobalShortcuts,
       {} as InteractiveRequestService,
     )
@@ -77,7 +75,6 @@ describe('access mode IPC', () => {
       {} as DesktopSourcePicker,
       {} as AuditLog,
       {} as MacScreenPermissionService,
-      {} as UpdateManager,
       {} as GlobalShortcuts,
       {} as InteractiveRequestService,
     )
@@ -111,7 +108,6 @@ describe('dialog following settings IPC', () => {
       {} as DesktopSourcePicker,
       {} as AuditLog,
       {} as MacScreenPermissionService,
-      {} as UpdateManager,
       {} as GlobalShortcuts,
       {} as InteractiveRequestService,
     )
@@ -147,7 +143,6 @@ describe('interactive request IPC', () => {
       {} as DesktopSourcePicker,
       {} as AuditLog,
       {} as MacScreenPermissionService,
-      {} as UpdateManager,
       {} as GlobalShortcuts,
       interactiveRequests,
     )
@@ -158,5 +153,27 @@ describe('interactive request IPC', () => {
     expect(log).toEqual(['refreshed', 'respond:request-1:enable-interactive', 'mode:interactive', 'released'])
     await expect(Promise.resolve().then(() => respond({}, '', 'keep-read-only'))).rejects.toThrow('non-empty string')
     await expect(Promise.resolve().then(() => respond({}, 'request-1', 'future'))).rejects.toThrow('Unknown interactive request decision')
+  })
+})
+
+describe('update IPC', () => {
+  it('leaves every update channel to the shared auto-update member', () => {
+    registerIpc(
+      {} as AppState,
+      {} as SettingsStore,
+      {} as McpHost,
+      {} as CaptureController,
+      {} as ElectronCaptureService,
+      {} as ElectronControlService,
+      {} as AccessModeController,
+      {} as DesktopSourcePicker,
+      {} as AuditLog,
+      {} as MacScreenPermissionService,
+      {} as GlobalShortcuts,
+      {} as InteractiveRequestService,
+    )
+    const channels = [...ipc.handlers.keys()]
+    expect(channels.length).toBeGreaterThan(0)
+    expect(channels.filter(channel => /^updates?:|^autoUpdate:|snooze/i.test(channel))).toEqual([])
   })
 })

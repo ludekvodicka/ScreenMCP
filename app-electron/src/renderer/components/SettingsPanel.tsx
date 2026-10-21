@@ -1,10 +1,11 @@
 import { useEffect, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
-import type { AppSettings, FramePolicy, ShortcutAction, ShortcutStatus, SourceSelection, UpdateStatus } from '../../shared/contracts'
+import type { AutoUpdateController } from '../../../../shared/electron/autoUpdate/renderer/useAutoUpdate'
+import type { AppSettings, FramePolicy, ShortcutAction, ShortcutStatus, SourceSelection } from '../../shared/contracts'
 
 interface Props {
   settings: AppSettings
   selection: SourceSelection | null
-  updateStatus: UpdateStatus
+  update: AutoUpdateController
   onChange: (settings: AppSettings) => void
   onOpenUpdates: () => void
 }
@@ -16,13 +17,13 @@ function policyKey(selection: SourceSelection): string {
   else throw new Error(`Unknown source kind: ${JSON.stringify(selection.kind)}`)
 }
 
-export function SettingsPanel({ settings, selection, updateStatus, onChange, onOpenUpdates }: Props) {
+export function SettingsPanel({ settings, selection, update, onChange, onOpenUpdates }: Props) {
   const fallback: FramePolicy = { format: settings.format, jpegQuality: settings.jpegQuality, maxLongSide: settings.maxLongSide }
   const policy = selection ? settings.sourcePolicies[policyKey(selection)] ?? fallback : fallback
   const updatePolicy = (patch: Partial<FramePolicy>): void => { void window.screenmcp.setFramePolicy({ ...policy, ...patch }).then(onChange) }
   const updateSettings = (patch: Partial<AppSettings>): void => { void window.screenmcp.updateSettings(patch).then(onChange) }
   const updateUpdateSettings = (patch: Partial<AppSettings['updates']>): void => updateSettings({ updates: { ...settings.updates, ...patch } })
-  const checkNow = (): void => { onOpenUpdates(); void window.screenmcp.checkForUpdates() }
+  const checkNow = (): void => { onOpenUpdates(); update.check() }
   const [shortcutStatus, setShortcutStatus] = useState<ShortcutStatus | null>(null)
   useEffect(() => {
     let live = true
@@ -61,13 +62,18 @@ export function SettingsPanel({ settings, selection, updateStatus, onChange, onO
         <label className="checkbox-setting"><input type="checkbox" checked={settings.updates.autoCheck} onChange={event => updateUpdateSettings({ autoCheck: event.target.checked })} /><span>Check automatically after startup</span></label>
         <label><span>Check interval</span><select value={settings.updates.checkIntervalMinutes} onChange={event => updateUpdateSettings({ checkIntervalMinutes: Number(event.target.value) })}><option value="15">Every 15 minutes</option><option value="60">Every hour</option><option value="120">Every 2 hours</option><option value="360">Every 6 hours</option><option value="720">Every 12 hours</option><option value="1440">Daily</option></select></label>
       </div>
-      <div className="update-settings-status">
-        <strong>{updateStatusSummary(updateStatus)}</strong>
-        <span>{updateStatus.reason}</span>
-        <small>{updateStatus.lastCheckAt ? `Last check ${new Date(updateStatus.lastCheckAt).toLocaleString()} · ${updateStatus.lastCheckOutcome ?? 'no result'}` : 'Not checked in this run.'}</small>
+      {update.view && update.status && (
+        <div className="update-settings-status">
+          <strong>{update.view.text}</strong>
+          {update.view.detail && <span>{update.view.detail}</span>}
+          <small>Running {update.status.running}</small>
+        </div>
+      )}
+      <div className="settings-actions">
+        {update.view?.actions.includes('check') && <button className="primary-button" onClick={checkNow}>Check now</button>}
+        {update.status?.releasePage && <button onClick={() => update.openReleasePage()}>Open GitHub Releases</button>}
       </div>
-      <div className="settings-actions"><button className="primary-button" onClick={checkNow}>Check now</button><button onClick={() => void window.screenmcp.openReleasePage()}>Open GitHub Releases</button></div>
-      <p className="settings-note">Automatic schedule changes apply after restarting ScreenMCP. Downloads and restarts always require your explicit action.</p>
+      <p className="settings-note">Schedule changes apply after restarting ScreenMCP. A new version downloads in the background and installs when you choose Restart and install or on the next quit.</p>
     </section>
   )
 }
@@ -117,17 +123,4 @@ function acceleratorKey(event: ReactKeyboardEvent): string | null {
   if (key === 'PrintScreen') return 'PrintScreen'
   const named: Record<string, string> = { ' ': 'Space', Enter: 'Return', Tab: 'Tab', Backspace: 'Backspace', Delete: 'Delete', Insert: 'Insert', Home: 'Home', End: 'End', PageUp: 'PageUp', PageDown: 'PageDown', ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right' }
   return named[key] ?? null
-}
-
-function updateStatusSummary(status: UpdateStatus): string {
-  if (status.channel === 'none') return 'Manual update channel'
-  else if (status.channel !== 'github') throw new Error(`Unknown update channel: ${JSON.stringify(status.channel)}`)
-  if (status.phase === 'idle') return status.lastCheckOutcome ?? `Running ${status.running}`
-  else if (status.phase === 'checking') return 'Checking GitHub Releases…'
-  else if (status.phase === 'available') return `Version ${status.pendingVersion ?? ''} is available`
-  else if (status.phase === 'downloading') return `Downloading ${status.pendingVersion ?? ''} · ${Math.round(status.progress?.percent ?? 0)}%`
-  else if (status.phase === 'ready') return `Version ${status.pendingVersion ?? ''} is ready to install`
-  else if (status.phase === 'installing') return `Installing ${status.pendingVersion ?? ''}`
-  else if (status.phase === 'error') return status.lastError ?? 'Update failed'
-  else throw new Error(`Unknown update phase: ${JSON.stringify(status.phase)}`)
 }

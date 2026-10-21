@@ -57,10 +57,10 @@ download from [GitHub Releases](https://github.com/ludekvodicka/ScreenMCP/releas
 
 | Platform | Package | Update behavior |
 | --- | --- | --- |
-| Windows | `ScreenMCP-Setup-…exe` | Checks GitHub Releases; download and restart require approval. |
-| Windows | `ScreenMCP-Portable-…exe` | Manual replacement from Releases. |
-| macOS | `ScreenMCP-…dmg` | Manual while builds remain unsigned and unnotarized. |
-| Linux | `ScreenMCP-…AppImage` / `.deb` | Packaged builds check GitHub Releases; download and restart require approval. |
+| Windows | `ScreenMCP-Setup-…exe` | Downloads new releases in the background; installs on Restart and install or the next quit. |
+| Windows | `ScreenMCP-Portable-…exe` | Shows a new release; manual replacement from Releases. |
+| macOS | `ScreenMCP-…dmg` | Shows a new release; manual while builds remain unsigned and unnotarized. |
+| Linux | `ScreenMCP-…AppImage` / `.deb` | Downloads new releases in the background; installs on Restart and install or the next quit. |
 
 Windows SmartScreen and macOS Gatekeeper can warn because there is no signing certificate yet.
 

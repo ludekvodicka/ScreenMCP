@@ -15,7 +15,7 @@ in force for their respective components.
 - `koffi@3.1.1`
 - `react@19.2.7`
 - `react-dom@19.2.7`
-- `sharp@0.35.3`
+- `sharp@0.35.4`
 - `tesseract.js@7.0.0`
 - `zod@4.4.3`
 
@@ -36,14 +36,14 @@ in force for their respective components.
 - `detect-libc@2.1.2`
 - `exponential-backoff@3.1.3`
 - `idb-keyval@6.3.0`
-- `sharp@0.35.3`
+- `sharp@0.35.4`
 - `tesseract.js-core@7.0.0`
 - `tesseract.js@7.0.0`
 - `wasm-feature-detect@1.8.0`
 
 ### Apache-2.0 AND LGPL-3.0-or-later
 
-- `@img/sharp-win32-x64@0.35.3`
+- `@img/sharp-win32-x64@0.35.4`
 
 ### BlueOak-1.0.0
 
@@ -55,7 +55,7 @@ in force for their respective components.
 - `package-json-from-dist@1.0.1`
 - `path-scurry@1.11.1`
 - `sax@1.6.0`
-- `tar@7.5.20`
+- `tar@7.5.22`
 - `yallist@5.0.0`
 
 ### BSD-2-Clause
@@ -67,8 +67,8 @@ in force for their respective components.
 ### BSD-3-Clause
 
 - `@mapbox/node-pre-gyp@2.0.3`
-- `fast-uri@3.1.3`
-- `qs@6.15.3`
+- `fast-uri@3.1.8`
+- `qs@6.16.0`
 
 ### ISC
 
@@ -109,7 +109,7 @@ in force for their respective components.
 
 ### MIT
 
-- `@hono/node-server@1.19.14`
+- `@hono/node-server@1.19.17`
 - `@img/colour@1.1.0`
 - `@koromix/koffi-win32-x64@3.1.1`
 - `@modelcontextprotocol/sdk@1.29.0`
@@ -125,7 +125,7 @@ in force for their respective components.
 - `balanced-match@1.0.2`
 - `bmp-js@0.1.0`
 - `body-parser@2.3.0`
-- `brace-expansion@2.1.2`
+- `brace-expansion@2.1.7`
 - `builder-util-runtime@9.7.0`
 - `bytes@3.1.2`
 - `call-bind-apply-helpers@1.0.2`
@@ -173,20 +173,20 @@ in force for their respective components.
 - `has-flag@4.0.0`
 - `has-symbols@1.1.0`
 - `hasown@2.0.4`
-- `hono@4.12.30`
+- `hono@4.13.8`
 - `http-errors@2.0.1`
 - `http-proxy-agent@7.0.2`
 - `https-proxy-agent@7.0.6`
 - `iconv-lite@0.6.3`
 - `iconv-lite@0.7.3`
 - `imurmurhash@0.1.4`
-- `ip-address@10.2.0`
+- `ip-address@10.7.2`
 - `ipaddr.js@1.9.1`
 - `is-fullwidth-code-point@3.0.0`
 - `is-promise@4.0.0`
 - `is-url@1.2.4`
 - `jose@6.2.3`
-- `js-yaml@4.3.0`
+- `js-yaml@4.3.2`
 - `json-schema-traverse@1.0.0`
 - `jsonfile@6.2.1`
 - `koffi@3.1.1`

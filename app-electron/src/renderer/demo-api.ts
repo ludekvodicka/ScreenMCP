@@ -17,9 +17,8 @@ import type {
   PreviewFrame,
   ScreenMcpApi,
   SourceSelection,
-  UpdatePrompt,
-  UpdateStatus,
 } from '../shared/contracts'
+import type { DtoAutoUpdateStatus } from '../../../shared/electron/autoUpdate/common/autoUpdate.dto'
 
 function art(label: string, accent: string): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="600"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#132945"/><stop offset="1" stop-color="#07111e"/></linearGradient></defs><rect width="960" height="600" fill="url(#g)"/><rect x="34" y="30" width="892" height="52" rx="12" fill="#0a1625" stroke="#29415a"/><circle cx="68" cy="56" r="8" fill="${accent}"/><text x="92" y="64" fill="#dce9f8" font-family="Arial" font-size="24">${label}</text><rect x="34" y="106" width="240" height="460" rx="14" fill="#0a1625"/><rect x="298" y="106" width="628" height="460" rx="14" fill="#0d1b2e"/><path d="M340 164h360M340 206h500M340 248h410M340 326h520M340 368h350" stroke="#36516d" stroke-width="15" stroke-linecap="round"/><rect x="340" y="438" width="220" height="70" rx="12" fill="${accent}" opacity=".7"/></svg>`
@@ -64,14 +63,11 @@ export function createDemoApi(options: { interactiveRequest?: InteractiveWriteAc
   const controlListeners = new Set<(state: ControlState) => void>()
   const interactiveRequestListeners = new Set<(requests: InteractiveRequest[]) => void>()
   const auditListeners = new Set<(entry: AuditEntry) => void>()
-  const updateListeners = new Set<(status: UpdateStatus) => void>()
-  const updatePromptListeners = new Set<(prompt: UpdatePrompt) => void>()
-  const updateOpenListeners = new Set<() => void>()
   const auditEntries: AuditEntry[] = [
     { id: 'demo-look', timestamp: Date.now() - 42_000, client: 'codex', action: 'look', source: 'Visual Studio Code · screenmcp', sourceKind: 'window', changed: true, hash: '0123456789abcdef', bytes: 48_210, thumbnail: 'demo-look.jpg', error: null },
     { id: 'demo-unchanged', timestamp: Date.now() - 18_000, client: 'claude', action: 'wait_for_change', source: 'Monitor 1 · 2560×1440', sourceKind: 'monitor', changed: false, hash: 'fedcba9876543210', bytes: null, thumbnail: null, error: null },
   ]
-  let updateStatus: UpdateStatus = { channel: 'none', reason: 'Demo run — install a packaged release to use automatic updates.', autoCheck: true, checkIntervalMinutes: 120, running: '0.1.0', phase: 'idle', progress: null, lastError: null, lastCheckAt: null, lastCheckOutcome: null, pendingVersion: null, snoozedUntil: 0 }
+  const updateStatus: DtoAutoUpdateStatus = { running: '0.1.0', mode: 'off', releasePage: true, state: { kind: 'off', reason: 'Demo run: install a packaged release to get updates.' } }
   let controlState: ControlState = { armed: false, sourceKey: null }
   let interactiveRequests: InteractiveRequest[] = options.interactiveRequest
     ? [{ id: 'demo-interactive-request', client: 'codex', action: options.interactiveRequest, source: demoWindow.label }]
@@ -85,7 +81,6 @@ export function createDemoApi(options: { interactiveRequest?: InteractiveWriteAc
     wayland: false,
     selection,
     macScreenPermission: 'not-applicable',
-    updateStatus,
     controlState,
     interactiveRequests,
   }
@@ -108,7 +103,7 @@ export function createDemoApi(options: { interactiveRequest?: InteractiveWriteAc
     return Promise.resolve(structuredClone(selection))
   }
   return {
-    getBootstrapState: () => Promise.resolve(structuredClone({ ...bootstrap, selection, updateStatus, controlState, interactiveRequests })),
+    getBootstrapState: () => Promise.resolve(structuredClone({ ...bootstrap, selection, controlState, interactiveRequests })),
     listSources: () => Promise.resolve(structuredClone(sources.filter(source => source.kind === 'monitor'))),
     selectSource: choose,
     selectPortalSource: () => Promise.reject(new Error('Wayland portal is not active in demo mode')),
@@ -196,28 +191,18 @@ export function createDemoApi(options: { interactiveRequest?: InteractiveWriteAc
       return Promise.resolve()
     },
     getShortcutStatus: () => Promise.resolve({ pickRegion: settings.shortcuts.pickRegion ? 'active' as const : 'off' as const, pickWindow: settings.shortcuts.pickWindow ? 'active' as const : 'off' as const }),
-    getUpdateStatus: () => Promise.resolve(structuredClone(updateStatus)),
-    checkForUpdates: () => {
-      updateStatus = { ...updateStatus, lastCheckAt: Date.now(), lastCheckOutcome: updateStatus.reason }
-      for (const listener of updateListeners) listener(structuredClone(updateStatus))
-      return Promise.resolve(structuredClone(updateStatus))
+    autoUpdate: {
+      status: () => Promise.resolve(structuredClone(updateStatus)),
+      check: () => Promise.resolve(),
+      install: () => Promise.resolve(),
+      openReleasePage: () => Promise.resolve(),
+      onChanged: () => () => undefined,
     },
-    downloadUpdate: () => Promise.reject(new Error(updateStatus.reason)),
-    installUpdate: () => Promise.reject(new Error(updateStatus.reason)),
-    snoozeUpdate: hours => {
-      updateStatus = { ...updateStatus, snoozedUntil: Date.now() + hours * 60 * 60_000 }
-      for (const listener of updateListeners) listener(structuredClone(updateStatus))
-      return Promise.resolve(structuredClone(updateStatus))
-    },
-    openReleasePage: () => Promise.resolve(),
     onCaptureState: (_callback: (state: CaptureState) => void) => () => undefined,
     onStopped: callback => { stoppedListeners.add(callback); return () => stoppedListeners.delete(callback) },
     onControlState: callback => { controlListeners.add(callback); return () => controlListeners.delete(callback) },
     onInteractiveRequests: callback => { interactiveRequestListeners.add(callback); return () => interactiveRequestListeners.delete(callback) },
     onSourceChanged: callback => { sourceListeners.add(callback); return () => sourceListeners.delete(callback) },
     onAuditEntry: callback => { auditListeners.add(callback); return () => auditListeners.delete(callback) },
-    onUpdateStatus: callback => { updateListeners.add(callback); return () => updateListeners.delete(callback) },
-    onUpdatePrompt: callback => { updatePromptListeners.add(callback); return () => updatePromptListeners.delete(callback) },
-    onUpdateOpen: callback => { updateOpenListeners.add(callback); return () => updateOpenListeners.delete(callback) },
   }
 }

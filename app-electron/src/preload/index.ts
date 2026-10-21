@@ -18,9 +18,8 @@ import type {
   ScreenMcpApi,
   ShortcutStatus,
   SourceSelection,
-  UpdatePrompt,
-  UpdateStatus,
 } from '../shared/contracts'
+import { AutoUpdateBridge } from '../../../shared/electron/autoUpdate/preload/autoUpdateBridge'
 
 function subscribe<T>(channel: string, callback: (value: T) => void): () => void {
   const listener = (_event: Electron.IpcRendererEvent, value: T): void => callback(value)
@@ -52,21 +51,13 @@ const api: ScreenMcpApi = {
   setAccessMode: (mode: AccessMode) => ipcRenderer.invoke('access:set-mode', mode) as Promise<void>,
   respondInteractiveRequest: (id: string, decision: InteractiveRequestDecision) => ipcRenderer.invoke('interactive:respond', id, decision) as Promise<void>,
   getShortcutStatus: () => ipcRenderer.invoke('shortcuts:status') as Promise<ShortcutStatus>,
-  getUpdateStatus: () => ipcRenderer.invoke('updates:status') as Promise<UpdateStatus>,
-  checkForUpdates: () => ipcRenderer.invoke('updates:check') as Promise<UpdateStatus>,
-  downloadUpdate: () => ipcRenderer.invoke('updates:download') as Promise<UpdateStatus>,
-  installUpdate: () => ipcRenderer.invoke('updates:install') as Promise<void>,
-  snoozeUpdate: hours => ipcRenderer.invoke('updates:snooze', hours) as Promise<UpdateStatus>,
-  openReleasePage: () => ipcRenderer.invoke('updates:open-release') as Promise<void>,
+  autoUpdate: AutoUpdateBridge.create(ipcRenderer),
   onCaptureState: callback => subscribe<CaptureState>('capture:state', callback),
   onStopped: callback => subscribe<boolean>('capture:stopped', callback),
   onControlState: callback => subscribe<ControlState>('control:state', callback),
   onInteractiveRequests: callback => subscribe<InteractiveRequest[]>('interactive:requests', callback),
   onSourceChanged: callback => subscribe<SourceSelection | null>('source:changed', callback),
   onAuditEntry: callback => subscribe<AuditEntry>('audit:entry', callback),
-  onUpdateStatus: callback => subscribe<UpdateStatus>('update:changed', callback),
-  onUpdatePrompt: callback => subscribe<UpdatePrompt>('update:prompt', callback),
-  onUpdateOpen: callback => subscribe<undefined>('update:open', callback),
 }
 
 contextBridge.exposeInMainWorld('screenmcp', api)

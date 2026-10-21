@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    "types": ["node"],
     "noEmit": true
   },
   "include": [
@@ -9,6 +10,9 @@
     "vitest.e2e.config.ts",
     "core/**/*.ts",
     "app-electron/**/*.ts",
-    "app-electron/**/*.tsx"
-  ]
+    "app-electron/**/*.tsx",
+    "shared/**/*.ts",
+    "shared/**/*.tsx"
+  ],
+  "exclude": ["shared/**/*.test.ts", "shared/**/*.test.tsx"]
 }

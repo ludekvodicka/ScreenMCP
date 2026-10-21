@@ -11,8 +11,9 @@ import { ScreenPickerDialog } from './components/ScreenPickerDialog'
 import { SourcePicker } from './components/SourcePicker'
 import { StatusChip } from './components/StatusChip'
 import { StopButton } from './components/StopButton'
-import { UpdateChip } from './components/UpdateChip'
-import { UpdateDialog } from './components/UpdateDialog'
+import { useAutoUpdate } from '../../../shared/electron/autoUpdate/renderer/useAutoUpdate'
+import { AutoUpdateIndicator } from '../../../shared/electron/autoUpdateWidgets/autoUpdateIndicator'
+import { AutoUpdatePanel } from '../../../shared/electron/autoUpdateWidgets/autoUpdatePanel'
 
 type Tab = 'source' | 'audit' | 'settings'
 
@@ -25,7 +26,8 @@ export function App() {
   const [screens, setScreens] = useState<CaptureSource[]>([])
   const [loadingScreens, setLoadingScreens] = useState(false)
   const [screenError, setScreenError] = useState<string | null>(null)
-  const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
+  const [updatePanelOpen, setUpdatePanelOpen] = useState(false)
+  const update = useAutoUpdate(window.screenmcp.autoUpdate)
   const interactiveRequestEvent = useRef<BootstrapState['interactiveRequests'] | null>(null)
 
   useEffect(() => {
@@ -38,9 +40,6 @@ export function App() {
         setState(current => current ? { ...current, interactiveRequests } : current)
       }),
       window.screenmcp.onSourceChanged(selection => setState(current => current ? { ...current, selection } : current)),
-      window.screenmcp.onUpdateStatus(updateStatus => setState(current => current ? { ...current, updateStatus } : current)),
-      window.screenmcp.onUpdatePrompt(() => setUpdateDialogOpen(true)),
-      window.screenmcp.onUpdateOpen(() => setUpdateDialogOpen(true)),
     ]
     void window.screenmcp.getBootstrapState().then(initial => setState({ ...initial, interactiveRequests: interactiveRequestEvent.current ?? initial.interactiveRequests }))
     return () => { for (const unsubscribe of unsubscribers) unsubscribe() }
@@ -124,7 +123,7 @@ export function App() {
         <StatusChip state={state.captureState} stopped={state.stopped} />
         <RecentActivityChip />
         <div className={`mode-chip ${mode}`}><i />{accessModeLabel(mode)}</div>
-        <UpdateChip status={state.updateStatus} onClick={() => setUpdateDialogOpen(true)} />
+        <AutoUpdateIndicator className="update-indicator" update={update} onOpen={() => setUpdatePanelOpen(true)} />
         <StopButton stopped={state.stopped} onToggle={() => void window.screenmcp.setStopped(!state.stopped)} />
       </header>
       <nav className="app-nav">
@@ -144,10 +143,10 @@ export function App() {
           </div>
         )}
         {tab === 'audit' && <AuditPanel />}
-        {tab === 'settings' && <SettingsPanel settings={state.settings} selection={selection} updateStatus={state.updateStatus} onChange={updateSettings} onOpenUpdates={() => setUpdateDialogOpen(true)} />}
+        {tab === 'settings' && <SettingsPanel settings={state.settings} selection={selection} update={update} onChange={updateSettings} onOpenUpdates={() => setUpdatePanelOpen(true)} />}
       </div>
       {screenPickerOpen && <ScreenPickerDialog screens={screens} loading={loadingScreens} busy={busy} error={screenError} onSelect={source => void selectScreen(source)} onCancel={() => { if (!busy) setScreenPickerOpen(false) }} />}
-      {updateDialogOpen && <UpdateDialog status={state.updateStatus} onClose={() => setUpdateDialogOpen(false)} />}
+      <AutoUpdatePanel update={update} open={updatePanelOpen} onClose={() => setUpdatePanelOpen(false)} />
       {interactiveRequest && <InteractiveRequestDialog request={interactiveRequest} onDecision={decision => window.screenmcp.respondInteractiveRequest(interactiveRequest.id, decision)} />}
     </main>
   )
