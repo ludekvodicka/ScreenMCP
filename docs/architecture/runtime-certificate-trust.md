@@ -2,9 +2,14 @@
 
 ## Decision
 
-ScreenMCP 0.2.1 pins Electron 43.8.1 in the root manifest and pnpm lockfile. This updates the
-packaged runtime to Node 24.22.0 and Chromium 150.0.7871.250 to reject the compromised eMudhra
-intermediate keys. No application certificate override or shared updater change is required.
+ScreenMCP 0.2.2 pins Electron 43.8.3 in the root manifest and pnpm lockfile. It follows the
+validated 0.2.1 / Electron 43.8.1 CA repair with the latest patch in the same supported Electron
+line. Both embed Node 24.22.0 and Chromium 150.0.7871.250. No application certificate override
+or shared updater change is required.
+
+Electron 43.8.3 adds upstream Chromium-stack security backports. This interim release is
+authorized independently of the October Node 24.22.1 update, which remains a separate follow-up
+until a supported Electron includes that patch. CI's Node 24.22.1 pin updates the build host only.
 
 Electron's [upstream fix](https://github.com/electron/electron/pull/55126),
 [backported to 43](https://github.com/electron/electron/pull/55130), enforces a compiled SPKI
@@ -32,9 +37,9 @@ Build sequentially, then run the check against the exact candidate executable:
 
 ```powershell
 pnpm run check
-pnpm exec electron-builder --win --x64 --config electron-builder.yml --config.directories.output=release/ca-0.2.1 --publish never
-pnpm run test:runtime-trust release/ca-0.2.1/win-unpacked/ScreenMCP.exe .aidocs/temp/runtime-check.json
-pnpm run release:smoke win release/ca-0.2.1
+pnpm exec electron-builder --win --x64 --config electron-builder.yml --config.directories.output=release/electron-0.2.2 --publish never
+pnpm run test:runtime-trust release/electron-0.2.2/win-unpacked/ScreenMCP.exe .aidocs/temp/runtime-check.json
+pnpm run release:smoke win release/electron-0.2.2
 ```
 
 `scripts/smoke-runtime-trust.mjs` starts a new packaged process with isolated application, Electron,

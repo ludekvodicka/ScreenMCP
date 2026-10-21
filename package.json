@@ -1,6 +1,6 @@
 {
   "name": "screenmcp",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "type": "module",
   "description": "Privacy-first desktop screen capture MCP server",
@@ -62,7 +62,7 @@
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "5.2.0",
-    "electron": "43.8.1",
+    "electron": "43.8.3",
     "electron-builder": "26.15.3",
     "electron-vite": "5.0.0",
     "eslint": "10.7.0",
