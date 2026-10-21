@@ -25,6 +25,15 @@ a full-history secret scan. `release.yml` has two entry points:
 Builders always use `--publish never`; only the final release job uploads assets. This prevents a
 partially successful matrix from exposing an incomplete update feed.
 
+CI and release builders pin Node 24.22.1 independently of Electron's embedded Node. A build-host
+Node update does not update the packaged runtime; that requires a supported Electron release.
+
+The third-party inventory lists platform-independent runtime packages from pnpm's installed tree.
+Optional sharp, resvg and koffi bindings differ by operating system, so their declared licenses are
+validated against the native-family notices instead of inserting host-specific package names into
+the shared document. An unexpected binding license fails the check. This keeps the same notice
+valid on Windows, macOS and Linux while retaining the actual license files in packaged dependencies.
+
 ## Runtime matrix
 
 | Runtime | Mode | Behavior |

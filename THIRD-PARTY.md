@@ -1,8 +1,9 @@
 # Third-party software
 
 ScreenMCP is MIT-licensed. Its packaged application also contains the npm runtime dependencies
-below. This inventory is generated from the installed pnpm production tree; cross-platform native
-binaries are attributed by family under "Native and WASM payloads". The dependency licenses remain
+below. This inventory is generated from the installed pnpm production tree. Platform-specific
+bindings are checked and attributed by family under "Native and WASM payloads" rather than listed
+as packages for just one operating system. The dependency licenses remain
 in force for their respective components.
 
 ## Direct runtime dependencies
@@ -21,11 +22,11 @@ in force for their respective components.
 
 ## Native and WASM payloads
 
-- `@resvg/resvg-js` and its platform bindings declare MPL-2.0.
-- `sharp` declares Apache-2.0. Its platform packages can bundle libvips components declared under
-  Apache-2.0, LGPL-3.0-or-later, and MIT as recorded below.
+- `@resvg/resvg-js` and its `@resvg/resvg-js-*` platform bindings declare MPL-2.0.
+- `sharp` declares Apache-2.0. Its `@img/sharp-*` platform bindings declare Apache-2.0,
+  LGPL-3.0-or-later, or Apache-2.0 AND LGPL-3.0-or-later, including bundled libvips.
 - `get-windows` ships a platform helper under its MIT package license.
-- `koffi` ships prebuilt Node-API bindings under its MIT package license.
+- `koffi` and its `@koromix/koffi-*` prebuilt Node-API bindings declare MIT.
 - `tesseract.js` and `tesseract.js-core` ship the Apache-2.0 OCR/WASM runtime; bundled English
   trained data comes from `@tesseract.js-data/eng` under MIT.
 
@@ -40,10 +41,6 @@ in force for their respective components.
 - `tesseract.js-core@7.0.0`
 - `tesseract.js@7.0.0`
 - `wasm-feature-detect@1.8.0`
-
-### Apache-2.0 AND LGPL-3.0-or-later
-
-- `@img/sharp-win32-x64@0.35.4`
 
 ### BlueOak-1.0.0
 
@@ -111,7 +108,6 @@ in force for their respective components.
 
 - `@hono/node-server@1.19.17`
 - `@img/colour@1.1.0`
-- `@koromix/koffi-win32-x64@3.1.1`
 - `@modelcontextprotocol/sdk@1.29.0`
 - `@pkgjs/parseargs@0.11.0`
 - `@tesseract.js-data/eng@1.0.0`
@@ -258,7 +254,6 @@ in force for their respective components.
 
 ### MPL-2.0
 
-- `@resvg/resvg-js-win32-x64-msvc@2.6.2`
 - `@resvg/resvg-js@2.6.2`
 
 ### Python-2.0

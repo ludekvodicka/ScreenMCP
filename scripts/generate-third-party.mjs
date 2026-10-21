@@ -1,26 +1,10 @@
 import { execSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
+import { runtimeLicenses } from './runtime-licenses.mjs'
 
-// Sourced from the installed pnpm production tree (`pnpm licenses list --prod --json`) rather than the
-// old package-lock.json. pnpm resolves only the current platform's optional native binaries, so the
-// per-package inventory below is current-platform; the cross-platform native families (sharp, resvg,
-// koffi, tesseract) stay attributed by family in the "Native and WASM payloads" section, which covers
-// every packaged OS.
 const root = JSON.parse(readFileSync('package.json', 'utf8'))
 const licensesByGroup = JSON.parse(execSync('pnpm licenses list --prod --json', { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }))
-
-const packages = new Map()
-for (const [licenseKey, entries] of Object.entries(licensesByGroup)) {
-  for (const entry of entries) {
-    const name = entry.name
-    if (!name || name === 'screenmcp' || name.startsWith('@screenmcp/')) continue
-    const license = entry.license ?? licenseKey
-    for (const version of entry.versions ?? []) {
-      if (!version || !license) throw new Error(`Missing version/license metadata for ${name}`)
-      packages.set(`${name}@${version}`, license)
-    }
-  }
-}
+const packages = runtimeLicenses(licensesByGroup)
 
 const direct = Object.entries(root.dependencies ?? {}).sort(([left], [right]) => left.localeCompare(right))
 const groups = new Map()
@@ -34,8 +18,9 @@ const lines = [
   '# Third-party software',
   '',
   'ScreenMCP is MIT-licensed. Its packaged application also contains the npm runtime dependencies',
-  'below. This inventory is generated from the installed pnpm production tree; cross-platform native',
-  'binaries are attributed by family under "Native and WASM payloads". The dependency licenses remain',
+  'below. This inventory is generated from the installed pnpm production tree. Platform-specific',
+  'bindings are checked and attributed by family under "Native and WASM payloads" rather than listed',
+  'as packages for just one operating system. The dependency licenses remain',
   'in force for their respective components.',
   '',
   '## Direct runtime dependencies',
@@ -44,11 +29,11 @@ const lines = [
   '',
   '## Native and WASM payloads',
   '',
-  '- `@resvg/resvg-js` and its platform bindings declare MPL-2.0.',
-  '- `sharp` declares Apache-2.0. Its platform packages can bundle libvips components declared under',
-  '  Apache-2.0, LGPL-3.0-or-later, and MIT as recorded below.',
+  '- `@resvg/resvg-js` and its `@resvg/resvg-js-*` platform bindings declare MPL-2.0.',
+  '- `sharp` declares Apache-2.0. Its `@img/sharp-*` platform bindings declare Apache-2.0,',
+  '  LGPL-3.0-or-later, or Apache-2.0 AND LGPL-3.0-or-later, including bundled libvips.',
   '- `get-windows` ships a platform helper under its MIT package license.',
-  '- `koffi` ships prebuilt Node-API bindings under its MIT package license.',
+  '- `koffi` and its `@koromix/koffi-*` prebuilt Node-API bindings declare MIT.',
   '- `tesseract.js` and `tesseract.js-core` ship the Apache-2.0 OCR/WASM runtime; bundled English',
   '  trained data comes from `@tesseract.js-data/eng` under MIT.',
   '',
