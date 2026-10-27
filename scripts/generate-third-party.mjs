@@ -1,10 +1,10 @@
 import { execSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
-import { runtimeLicenses } from './runtime-licenses.mjs'
+import { productionIdentities, runtimeLicenses } from './runtime-licenses.mjs'
 
+const pnpmJson = command => JSON.parse(execSync(`pnpm ${command} --json`, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }))
 const root = JSON.parse(readFileSync('package.json', 'utf8'))
-const licensesByGroup = JSON.parse(execSync('pnpm licenses list --prod --json', { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }))
-const packages = runtimeLicenses(licensesByGroup)
+const packages = runtimeLicenses(pnpmJson('licenses list'), productionIdentities(pnpmJson('list --prod --depth Infinity')))
 
 const direct = Object.entries(root.dependencies ?? {}).sort(([left], [right]) => left.localeCompare(right))
 const groups = new Map()

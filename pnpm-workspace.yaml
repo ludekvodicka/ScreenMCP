@@ -7,7 +7,7 @@ allowBuilds:
   sharp: true
   tesseract.js: true
 minimumReleaseAgeExclude:
-  - electron@43.8.3
+  - electron@43.8.4
 overrides:
   '@mapbox/node-pre-gyp': 2.0.3
   node-gyp: 11.4.2

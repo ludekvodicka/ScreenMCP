@@ -2,14 +2,17 @@
 
 ## Decision
 
-ScreenMCP 0.2.2 pins Electron 43.8.3 in the root manifest and pnpm lockfile. It follows the
-validated 0.2.1 / Electron 43.8.1 CA repair with the latest patch in the same supported Electron
-line. Both embed Node 24.22.0 and Chromium 150.0.7871.250. No application certificate override
-or shared updater change is required.
+ScreenMCP 0.2.3 pins Electron 43.8.4 in the root manifest and pnpm lockfile. Electron 43.8.4
+embeds Node 24.22.1, the October Node security release, with Chromium 150.0.7871.250 unchanged
+from 43.8.3. It follows the validated 0.2.1 / Electron 43.8.1 CA repair and the interim 0.2.2 /
+Electron 43.8.3 Chromium-stack update. No application certificate override or shared updater
+change is required. CI's Node 24.22.1 pin updates the build host only.
 
-Electron 43.8.3 adds upstream Chromium-stack security backports. This interim release is
-authorized independently of the October Node 24.22.1 update, which remains a separate follow-up
-until a supported Electron includes that patch. CI's Node 24.22.1 pin updates the build host only.
+Node 24.22.1 ships the SubjectPublicKeyInfo blocklist itself. Electron 43.8.4 therefore replaces
+its own Node patch with `tls_adapt_the_upstream_spki_blocklist_for_electron.patch`, which keeps
+the same eight compiled-in keys and adds only a BoringSSL build fix and test hooks. Its other
+`patches/node` changes are rebases. The packaged regression check below still applies, because
+the Node client enforcement now comes from different code.
 
 Electron's [upstream fix](https://github.com/electron/electron/pull/55126),
 [backported to 43](https://github.com/electron/electron/pull/55130), enforces a compiled SPKI
@@ -37,9 +40,9 @@ Build sequentially, then run the check against the exact candidate executable:
 
 ```powershell
 pnpm run check
-pnpm exec electron-builder --win --x64 --config electron-builder.yml --config.directories.output=release/electron-0.2.2 --publish never
-pnpm run test:runtime-trust release/electron-0.2.2/win-unpacked/ScreenMCP.exe .aidocs/temp/runtime-check.json
-pnpm run release:smoke win release/electron-0.2.2
+pnpm exec electron-builder --win --x64 --config electron-builder.yml --config.directories.output=release/electron-0.2.3 --publish never
+pnpm run test:runtime-trust release/electron-0.2.3/win-unpacked/ScreenMCP.exe .aidocs/temp/runtime-check.json
+pnpm run release:smoke win release/electron-0.2.3
 ```
 
 `scripts/smoke-runtime-trust.mjs` starts a new packaged process with isolated application, Electron,

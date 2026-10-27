@@ -29,10 +29,16 @@ CI and release builders pin Node 24.22.1 independently of Electron's embedded No
 Node update does not update the packaged runtime; that requires a supported Electron release.
 
 The third-party inventory lists platform-independent runtime packages from pnpm's installed tree.
+The production set comes from `pnpm list --prod --depth Infinity`, including transitive optional
+dependencies such as the `get-windows` build helpers that electron-builder packages; pnpm 12's
+`licenses list --prod` omits them, so it only supplies license metadata. Aliases count under their
+real package name.
+
 Optional sharp, resvg and koffi bindings differ by operating system, so their declared licenses are
 validated against the native-family notices instead of inserting host-specific package names into
-the shared document. An unexpected binding license fails the check. This keeps the same notice
-valid on Windows, macOS and Linux while retaining the actual license files in packaged dependencies.
+the shared document. The inventory does not descend into a binding's own dependencies. An unexpected
+binding license fails the check. This keeps the same notice valid on Windows, macOS and Linux while
+retaining the actual license files in packaged dependencies.
 
 ## Runtime matrix
 
